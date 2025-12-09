@@ -3,14 +3,13 @@ name = "editorconfig-parser"
 version = "0.0.1"
 authors = ["Boshen <boshenc@gmail.com>"]
 categories = []
-edition = "2021"
+edition = "2024"
 include = ["/src"]
 keywords = []
 license = "MIT"
 publish = true
 readme = "README.md"
 repository = "https://github.com/oxc-project/editorconfig-parser"
-rust-version = "1.76"
 description = ".editorconfig parser"
 
 [lib]
