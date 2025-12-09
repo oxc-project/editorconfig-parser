@@ -56,7 +56,25 @@ pub struct EditorConfigSection<'a> {
     /// Prettier print width.
     /// Not part of spec <https://github.com/editorconfig/editorconfig-vscode/issues/53#issuecomment-462432616>
     /// But documented in <https://prettier.io/docs/next/configuration#editorconfig>
-    pub max_line_length: Option<usize>,
+    pub max_line_length: Option<MaxLineLength>,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum MaxLineLength {
+    /// A numeric line length limit
+    Number(usize),
+    /// Line length limit is disabled
+    Off,
+}
+
+impl MaxLineLength {
+    fn parse(s: &str) -> Option<Self> {
+        if s.eq_ignore_ascii_case("off") {
+            Some(Self::Off)
+        } else {
+            s.parse::<usize>().ok().map(Self::Number)
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -191,7 +209,7 @@ impl<'a> EditorConfig<'a> {
                         section.insert_final_newline = parse_bool(value);
                     }
                     "max_line_length" => {
-                        section.max_line_length = parse_number(value);
+                        section.max_line_length = MaxLineLength::parse(value);
                     }
                     _ => {}
                 }

@@ -1,4 +1,4 @@
-use editorconfig_parser::{Charset, EditorConfig, EndOfLine, IdentStyle};
+use editorconfig_parser::{Charset, EditorConfig, EndOfLine, IdentStyle, MaxLineLength};
 
 #[test]
 fn empty() {
@@ -56,5 +56,17 @@ fn values() {
     assert_eq!(section.end_of_line, Some(EndOfLine::Lf));
     assert_eq!(section.indent_style, Some(IdentStyle::Space));
     assert_eq!(section.indent_size, Some(2));
-    assert_eq!(section.max_line_length, Some(80));
+    assert_eq!(section.max_line_length, Some(MaxLineLength::Number(80)));
+}
+
+#[test]
+fn max_line_length_off() {
+    let editor_config = EditorConfig::parse(
+        "
+        [*]
+        max_line_length = off",
+    );
+    assert_eq!(editor_config.sections().len(), 1);
+    let section = &editor_config.sections()[0];
+    assert_eq!(section.max_line_length, Some(MaxLineLength::Off));
 }
