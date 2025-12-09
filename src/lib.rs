@@ -1,27 +1,34 @@
+use std::path::Path;
+
 #[derive(Debug, Default, Clone)]
-pub struct EditorConfig<'a> {
+pub struct EditorConfig {
     /// Set to true to tell the core not to check any higher directory for EditorConfig settings for on the current filename.
     root: bool,
 
-    sections: Vec<EditorConfigSection<'a>>,
+    sections: Vec<EditorConfigSection>,
 }
 
-impl<'a> EditorConfig<'a> {
+impl EditorConfig {
     pub fn root(&self) -> bool {
         self.root
     }
 
-    pub fn sections(&self) -> &[EditorConfigSection<'a>] {
+    pub fn sections(&self) -> &[EditorConfigSection] {
         &self.sections
     }
 }
 
 /// <https://spec.editorconfig.org/index.html>
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
-pub struct EditorConfigSection<'a> {
+pub struct EditorConfigSection {
     /// Section Name: the string between the beginning `[` and the ending `]`.
-    pub name: &'a str,
+    pub name: String,
 
+    pub properties: EditorConfigProperties,
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
+pub struct EditorConfigProperties {
     /// Set to tab or space to use tabs or spaces for indentation, respectively.
     /// Option tab implies that an indentation is to be filled by as many hard tabs as possible, with the rest of the indentation filled by spaces.
     /// A non-normative explanation can be found in the indentation_ section.
@@ -143,9 +150,9 @@ impl Charset {
     }
 }
 
-impl<'a> EditorConfig<'a> {
+impl EditorConfig {
     /// <https://spec.editorconfig.org/index.html#id6>
-    pub fn parse(source_text: &'a str) -> Self {
+    pub fn parse(source_text: &str) -> Self {
         // EditorConfig files are in an INI-like file format.
         // To read an EditorConfig file, take one line at a time, from beginning to end.
         // For each line:
@@ -177,7 +184,7 @@ impl<'a> EditorConfig<'a> {
             if let Some(line) = line.strip_prefix('[') {
                 preamble = false;
                 if let Some(line) = line.strip_suffix(']') {
-                    let name = line;
+                    let name = line.to_string();
                     sections.push(EditorConfigSection { name, ..EditorConfigSection::default() });
                 }
             }
@@ -186,30 +193,31 @@ impl<'a> EditorConfig<'a> {
                 && let Some((key, value)) = line.split_once('=')
             {
                 let value = value.trim_start();
+                let properties = &mut section.properties;
                 match key.trim_end() {
                     "indent_style" => {
-                        section.indent_style = IdentStyle::parse(value);
+                        properties.indent_style = IdentStyle::parse(value);
                     }
                     "indent_size" => {
-                        section.indent_size = parse_number(value);
+                        properties.indent_size = parse_number(value);
                     }
                     "tab_width" => {
-                        section.indent_size = parse_number(value);
+                        properties.indent_size = parse_number(value);
                     }
                     "end_of_line" => {
-                        section.end_of_line = EndOfLine::parse(value);
+                        properties.end_of_line = EndOfLine::parse(value);
                     }
                     "charset" => {
-                        section.charset = Charset::parse(value);
+                        properties.charset = Charset::parse(value);
                     }
                     "trim_trailing_whitespace" => {
-                        section.trim_trailing_whitespace = parse_bool(value);
+                        properties.trim_trailing_whitespace = parse_bool(value);
                     }
                     "insert_final_newline" => {
-                        section.insert_final_newline = parse_bool(value);
+                        properties.insert_final_newline = parse_bool(value);
                     }
                     "max_line_length" => {
-                        section.max_line_length = MaxLineLength::parse(value);
+                        properties.max_line_length = MaxLineLength::parse(value);
                     }
                     _ => {}
                 }
@@ -231,5 +239,12 @@ fn parse_bool(s: &str) -> Option<bool> {
         Some(false)
     } else {
         None
+    }
+}
+
+impl EditorConfig {
+    /// Resolve a given path and return the resolved properties.
+    pub fn resolve(&self, path: &Path) -> EditorConfigProperties {
+        EditorConfigProperties::default()
     }
 }

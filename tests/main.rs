@@ -50,13 +50,13 @@ fn values() {
         max_line_length = 80",
     );
     assert_eq!(editor_config.sections().len(), 1);
-    let section = &editor_config.sections()[0];
-    assert_eq!(section.charset, Some(Charset::Utf8));
-    assert_eq!(section.insert_final_newline, Some(true));
-    assert_eq!(section.end_of_line, Some(EndOfLine::Lf));
-    assert_eq!(section.indent_style, Some(IdentStyle::Space));
-    assert_eq!(section.indent_size, Some(2));
-    assert_eq!(section.max_line_length, Some(MaxLineLength::Number(80)));
+    let properties = &editor_config.sections()[0].properties;
+    assert_eq!(properties.charset, Some(Charset::Utf8));
+    assert_eq!(properties.insert_final_newline, Some(true));
+    assert_eq!(properties.end_of_line, Some(EndOfLine::Lf));
+    assert_eq!(properties.indent_style, Some(IdentStyle::Space));
+    assert_eq!(properties.indent_size, Some(2));
+    assert_eq!(properties.max_line_length, Some(MaxLineLength::Number(80)));
 }
 
 #[test]
@@ -67,6 +67,12 @@ fn max_line_length_off() {
         max_line_length = off",
     );
     assert_eq!(editor_config.sections().len(), 1);
-    let section = &editor_config.sections()[0];
-    assert_eq!(section.max_line_length, Some(MaxLineLength::Off));
+    let properties = &editor_config.sections()[0].properties;
+    assert_eq!(properties.max_line_length, Some(MaxLineLength::Off));
 }
+
+#[test]
+fn parse() {}
+
+#[test]
+fn unset() {}
