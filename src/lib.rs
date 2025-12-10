@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use globset::Glob;
+use globset::{Glob, GlobMatcher};
 
 #[derive(Debug, Default, Clone)]
 pub struct EditorConfig {
@@ -21,10 +21,12 @@ impl EditorConfig {
 }
 
 /// <https://spec.editorconfig.org/index.html>
-#[derive(Debug, Default, Clone, Eq, PartialEq)]
+#[derive(Debug, Default, Clone)]
 pub struct EditorConfigSection {
     /// Section Name: the string between the beginning `[` and the ending `]`.
     pub name: String,
+
+    pub matcher: Option<GlobMatcher>,
 
     pub properties: EditorConfigProperties,
 }
@@ -141,7 +143,12 @@ impl EditorConfig {
                 preamble = false;
                 if let Some(line) = line.strip_suffix(']') {
                     let name = line.to_string();
-                    sections.push(EditorConfigSection { name, ..EditorConfigSection::default() });
+                    let matcher = Glob::new(&name).ok().map(|glob| glob.compile_matcher());
+                    sections.push(EditorConfigSection {
+                        name,
+                        matcher,
+                        ..EditorConfigSection::default()
+                    });
                 }
             }
             // Key-Value Pair (or Pair): contains a key and a value, separated by an `=`.
@@ -190,8 +197,7 @@ impl EditorConfig {
     pub fn resolve(&self, path: &Path) -> EditorConfigProperties {
         let mut properties = EditorConfigProperties::default();
         for section in &self.sections {
-            let glob = Glob::new(&section.name).unwrap().compile_matcher();
-            if glob.is_match(path) {
+            if section.matcher.as_ref().is_some_and(|matcher| matcher.is_match(path)) {
                 properties.override_with(&section.properties);
             }
         }
