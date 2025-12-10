@@ -50,6 +50,7 @@ undocumented_unsafe_blocks = "warn"
 infinite_loop = "warn"
 
 [dependencies]
+globset = "0.4.18"
 
 [profile.release]
 # Configurations explicitly listed here for clarity.
