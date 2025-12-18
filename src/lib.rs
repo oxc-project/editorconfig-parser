@@ -27,7 +27,7 @@ impl EditorConfig {
     }
 
     /// Sets the current working directory for resolving absolute paths.
-    pub fn with_cwd(mut self, cwd: impl AsRef<Path>) -> Self {
+    pub fn with_cwd<P: AsRef<Path>>(mut self, cwd: P) -> Self {
         self.cwd = Some(cwd.as_ref().to_path_buf());
         self
     }
