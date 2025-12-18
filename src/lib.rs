@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use globset::{Glob, GlobMatcher};
 
@@ -8,6 +8,9 @@ pub struct EditorConfig {
     root: bool,
 
     sections: Vec<EditorConfigSection>,
+
+    /// The base directory for resolving absolute paths.
+    cwd: Option<PathBuf>,
 }
 
 impl EditorConfig {
@@ -17,6 +20,16 @@ impl EditorConfig {
 
     pub fn sections(&self) -> &[EditorConfigSection] {
         &self.sections
+    }
+
+    pub fn cwd(&self) -> Option<&Path> {
+        self.cwd.as_deref()
+    }
+
+    /// Sets the current working directory for resolving absolute paths.
+    pub fn with_cwd<P: AsRef<Path>>(mut self, cwd: P) -> Self {
+        self.cwd = Some(cwd.as_ref().to_path_buf());
+        self
     }
 }
 
@@ -190,11 +203,14 @@ impl EditorConfig {
             }
         }
 
-        Self { root, sections }
+        Self { root, sections, cwd: None }
     }
 
     /// Resolve a given path and return the resolved properties.
+    /// If `cwd` is set, absolute paths will be resolved relative to `cwd`.
     pub fn resolve(&self, path: &Path) -> EditorConfigProperties {
+        let path =
+            if let Some(cwd) = &self.cwd { path.strip_prefix(cwd).unwrap_or(path) } else { path };
         let mut properties = EditorConfigProperties::default();
         for section in &self.sections {
             if section.matcher.as_ref().is_some_and(|matcher| matcher.is_match(path)) {

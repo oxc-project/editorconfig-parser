@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use editorconfig_parser::{
     Charset, EditorConfig, EditorConfigProperties, EditorConfigProperty::Value, EndOfLine,
@@ -179,4 +179,53 @@ fn unset() {
     let path = Path::new("/").join("file.foo");
     let properties = editor_config.resolve(&path);
     assert_eq!(properties, EditorConfigProperties::default());
+}
+
+#[test]
+fn resolve_with_cwd() {
+    let editor_config = EditorConfig::parse(
+        "
+        [*]
+        indent_size = 2
+
+        [*.ts]
+        indent_size = 4
+
+        [src/**/*.ts]
+        indent_size = 8
+    ",
+    )
+    .with_cwd("/project");
+
+    assert_eq!(editor_config.cwd(), Some(Path::new("/project")));
+
+    // Absolute path should be resolved relative to cwd
+    let properties = editor_config.resolve(Path::new("/project/file.ts"));
+    assert_eq!(properties.indent_size, Value(4));
+
+    let properties = editor_config.resolve(Path::new("/project/src/file.ts"));
+    assert_eq!(properties.indent_size, Value(8));
+
+    // Path not under cwd should still work (uses path as-is)
+    let properties = editor_config.resolve(Path::new("/other/file.ts"));
+    assert_eq!(properties.indent_size, Value(4));
+
+    // Relative path should work as before
+    let properties = editor_config.resolve(Path::new("file.ts"));
+    assert_eq!(properties.indent_size, Value(4));
+}
+
+#[test]
+fn resolve_with_cwd_pathbuf() {
+    let cwd = PathBuf::from("/my/project");
+    let editor_config = EditorConfig::parse(
+        "
+        [*.rs]
+        indent_size = 4
+    ",
+    )
+    .with_cwd(&cwd);
+
+    let properties = editor_config.resolve(&cwd.join("main.rs"));
+    assert_eq!(properties.indent_size, Value(4));
 }
