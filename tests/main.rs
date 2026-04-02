@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use editorconfig_parser::{
     Charset, EditorConfig, EditorConfigProperties, EditorConfigProperty::Value, EndOfLine,
-    IndentStyle, MaxLineLength,
+    IndentStyle, MaxLineLength, QuoteType,
 };
 
 #[test]
@@ -62,6 +62,44 @@ fn values() {
     assert_eq!(properties.indent_style, Value(IndentStyle::Space));
     assert_eq!(properties.indent_size, Value(2));
     assert_eq!(properties.max_line_length, Value(MaxLineLength::Number(80)));
+}
+
+#[test]
+fn quote_type() {
+    let editor_config = EditorConfig::parse(
+        "
+        [*]
+        quote_type = single",
+    );
+    let properties = &editor_config.sections()[0].properties;
+    assert_eq!(properties.quote_type, Value(QuoteType::Single));
+
+    let editor_config = EditorConfig::parse(
+        "
+        [*]
+        quote_type = double",
+    );
+    let properties = &editor_config.sections()[0].properties;
+    assert_eq!(properties.quote_type, Value(QuoteType::Double));
+
+    let editor_config = EditorConfig::parse(
+        "
+        [*]
+        quote_type = auto",
+    );
+    let properties = &editor_config.sections()[0].properties;
+    assert_eq!(properties.quote_type, Value(QuoteType::Auto));
+}
+
+#[test]
+fn quote_type_case_insensitive() {
+    let editor_config = EditorConfig::parse(
+        "
+        [*]
+        quote_type = SINGLE",
+    );
+    let properties = &editor_config.sections()[0].properties;
+    assert_eq!(properties.quote_type, Value(QuoteType::Single));
 }
 
 #[test]
@@ -174,6 +212,7 @@ fn unset() {
         indent_style = unset
         indent_size = unset
         max_line_length = unset
+        quote_type = unset
     ",
     );
     let path = Path::new("/").join("file.foo");

@@ -89,6 +89,10 @@ pub struct EditorConfigProperties {
     /// Not part of spec <https://github.com/editorconfig/editorconfig-vscode/issues/53#issuecomment-462432616>
     /// But documented in <https://prettier.io/docs/next/configuration#editorconfig>
     pub max_line_length: EditorConfigProperty<MaxLineLength>,
+
+    /// Quote type for string literals.
+    /// Not part of spec but supported by Prettier, VSCode, IntelliJ, and others as a domain-specific extension.
+    pub quote_type: EditorConfigProperty<QuoteType>,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -119,6 +123,13 @@ pub enum Charset {
     Utf8bom,
     Utf16be,
     Utf16le,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum QuoteType {
+    Single,
+    Double,
+    Auto,
 }
 
 impl EditorConfig {
@@ -198,6 +209,9 @@ impl EditorConfig {
                         properties.max_line_length =
                             EditorConfigProperty::<MaxLineLength>::parse(value);
                     }
+                    "quote_type" => {
+                        properties.quote_type = QuoteType::parse(value);
+                    }
                     _ => {}
                 }
             }
@@ -245,6 +259,7 @@ impl EditorConfigProperties {
         self.trim_trailing_whitespace.override_with(&other.trim_trailing_whitespace);
         self.insert_final_newline.override_with(&other.insert_final_newline);
         self.max_line_length.override_with(&other.max_line_length);
+        self.quote_type.override_with(&other.quote_type);
     }
 }
 
@@ -318,6 +333,22 @@ impl EditorConfigProperty<Charset> {
             Self::Unset
         } else {
             Self::None
+        }
+    }
+}
+
+impl QuoteType {
+    fn parse(s: &str) -> EditorConfigProperty<Self> {
+        if s.eq_ignore_ascii_case("single") {
+            EditorConfigProperty::Value(Self::Single)
+        } else if s.eq_ignore_ascii_case("double") {
+            EditorConfigProperty::Value(Self::Double)
+        } else if s.eq_ignore_ascii_case("auto") {
+            EditorConfigProperty::Value(Self::Auto)
+        } else if s.eq_ignore_ascii_case("unset") {
+            EditorConfigProperty::Unset
+        } else {
+            EditorConfigProperty::None
         }
     }
 }
