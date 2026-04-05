@@ -94,8 +94,9 @@ The parser supports all standard EditorConfig properties:
 | `trim_trailing_whitespace` | `bool` | `true`, `false` |
 | `insert_final_newline` | `bool` | `true`, `false` |
 | `max_line_length` | `MaxLineLength` | Positive integer or `off` |
+| `quote_type` | `QuoteType` | `single`, `double`, `auto` |
 
-Note: `max_line_length` is not part of the official EditorConfig spec but is commonly used by tools like [Prettier](https://prettier.io/docs/next/configuration#editorconfig).
+Note: `max_line_length` and `quote_type` are not part of the official EditorConfig spec but are commonly used by tools like [Prettier](https://prettier.io/docs/next/configuration#editorconfig).
 
 ## How It Works
 
