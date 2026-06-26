@@ -84,17 +84,17 @@ let properties = config.resolve(Path::new("src/main.rs"));
 
 The parser supports all standard EditorConfig properties:
 
-| Property | Type | Values |
-|----------|------|--------|
-| `indent_style` | `IdentStyle` | `tab`, `space` |
-| `indent_size` | `usize` | Positive integer |
-| `tab_width` | `usize` | Positive integer |
-| `end_of_line` | `EndOfLine` | `lf`, `cr`, `crlf` |
-| `charset` | `Charset` | `latin1`, `utf-8`, `utf-8-bom`, `utf-16be`, `utf-16le` |
-| `trim_trailing_whitespace` | `bool` | `true`, `false` |
-| `insert_final_newline` | `bool` | `true`, `false` |
-| `max_line_length` | `MaxLineLength` | Positive integer or `off` |
-| `quote_type` | `QuoteType` | `single`, `double`, `auto` |
+| Property                   | Type            | Values                                                 |
+| -------------------------- | --------------- | ------------------------------------------------------ |
+| `indent_style`             | `IdentStyle`    | `tab`, `space`                                         |
+| `indent_size`              | `usize`         | Positive integer                                       |
+| `tab_width`                | `usize`         | Positive integer                                       |
+| `end_of_line`              | `EndOfLine`     | `lf`, `cr`, `crlf`                                     |
+| `charset`                  | `Charset`       | `latin1`, `utf-8`, `utf-8-bom`, `utf-16be`, `utf-16le` |
+| `trim_trailing_whitespace` | `bool`          | `true`, `false`                                        |
+| `insert_final_newline`     | `bool`          | `true`, `false`                                        |
+| `max_line_length`          | `MaxLineLength` | Positive integer or `off`                              |
+| `quote_type`               | `QuoteType`     | `single`, `double`, `auto`                             |
 
 Note: `max_line_length` and `quote_type` are not part of the official EditorConfig spec but are commonly used by tools like [Prettier](https://prettier.io/docs/next/configuration#editorconfig).
 
