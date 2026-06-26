@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- implement path resolution and property unset  ([#1](https://github.com/oxc-project/editorconfig-parser/pull/1))
+- implement path resolution and property unset ([#1](https://github.com/oxc-project/editorconfig-parser/pull/1))
 - resolve a path and return its properties
 
 ### Other
