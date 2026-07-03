@@ -133,14 +133,6 @@ MIT
 - [EditorConfig Specification](https://spec.editorconfig.org/)
 - [EditorConfig Official Site](https://editorconfig.org/)
 
-## [Sponsored By](https://github.com/sponsors/Boshen)
-
-<p align="center">
-  <a href="https://github.com/sponsors/Boshen">
-    <img src="https://raw.githubusercontent.com/Boshen/sponsors/main/sponsors.svg" alt="My sponsors" />
-  </a>
-</p>
-
 [discord-badge]: https://img.shields.io/discord/1079625926024900739?logo=discord&label=Discord
 [discord-url]: https://discord.gg/9uXCAwqQZW
 [license-badge]: https://img.shields.io/badge/license-MIT-blue.svg
@@ -157,3 +149,11 @@ MIT
 [crates-url]: https://crates.io/crates/editorconfig-parser
 [docs-badge]: https://img.shields.io/docsrs/editorconfig-parser
 [docs-url]: https://docs.rs/editorconfig-parser
+
+## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
+
+<p align="center">
+  <a href="https://github.com/sponsors/Boshen">
+    <img src="https://raw.githubusercontent.com/Boshen/sponsors/main/sponsors.svg" alt="Our sponsors" />
+  </a>
+</p>
