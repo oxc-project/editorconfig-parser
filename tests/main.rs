@@ -268,3 +268,123 @@ fn resolve_with_cwd_pathbuf() {
     let properties = editor_config.resolve(&cwd.join("main.rs"));
     assert_eq!(properties.indent_size, Value(4));
 }
+
+/// Resolve each path, and check the `indent_size` of the last matched section.
+fn assert_indent_sizes(source: &str, cases: &[(&str, Option<usize>)]) {
+    let editor_config = EditorConfig::parse(source);
+    for &(path, expected) in cases {
+        let actual = editor_config.resolve(Path::new(path)).indent_size;
+        assert_eq!(actual, expected.map_or_default(Value), "{path}");
+    }
+}
+
+/// Ported from https://github.com/editorconfig/editorconfig-core-test/blob/master/glob/braces.in
+/// Skips unsupported cases:
+/// - `\` escapes, which `globset` does not support on Windows
+/// - Numeric ranges
+#[test]
+fn braces() {
+    assert_indent_sizes(
+        "
+        [*.{py,js,html}]
+        indent_size = 1
+        [{single}.b]
+        indent_size = 2
+        [{}.c]
+        indent_size = 3
+        [a{b,c,}.d]
+        indent_size = 4
+        [a{,b,,c,}.e]
+        indent_size = 5
+        [{.f]
+        indent_size = 6
+        [{word,{also},this}.g]
+        indent_size = 7
+        [{{a,b},c}.k]
+        indent_size = 8
+        [{a,{b,c}}.l]
+        indent_size = 9
+        [{},b}.h]
+        indent_size = 10
+        [{{,b,c{d}.i]
+        indent_size = 11
+        [{some,a{*c,b}[ef]}.j]
+        indent_size = 12
+        [{aardvark..antelope}]
+        indent_size = 13
+    ",
+        &[
+            // word choice
+            ("test.py", Some(1)),
+            ("test.js", Some(1)),
+            ("test.html", Some(1)),
+            ("test.pyc", None),
+            // single choice
+            ("{single}.b", Some(2)),
+            ("single.b", None),
+            (".b", None),
+            // empty choice
+            ("{}.c", Some(3)),
+            (".c", None),
+            // choice with empty word
+            ("a.d", Some(4)),
+            ("ab.d", Some(4)),
+            ("ac.d", Some(4)),
+            ("a,.d", None),
+            // choice with empty words
+            ("a.e", Some(5)),
+            ("ab.e", Some(5)),
+            ("ac.e", Some(5)),
+            ("a,.e", None),
+            // no closing brace
+            ("{.f", Some(6)),
+            (".f", None),
+            // nested braces
+            ("word,this}.g", None),
+            ("{also,this}.g", None),
+            ("word.g", Some(7)),
+            ("{also}.g", Some(7)),
+            ("this.g", Some(7)),
+            // nested braces, adjacent at start
+            ("{{a,b},c}.k", None),
+            ("{a,b}.k", None),
+            ("a.k", Some(8)),
+            ("b.k", Some(8)),
+            ("c.k", Some(8)),
+            // nested braces, adjacent at end
+            ("{a,{b,c}}.l", None),
+            ("{b,c}.l", None),
+            ("a.l", Some(9)),
+            ("b.l", Some(9)),
+            ("c.l", Some(9)),
+            // closing inside beginning
+            ("{},b}.h", Some(10)),
+            // missing closing braces
+            ("{{,b,c{d}.i", Some(11)),
+            ("{.i", None),
+            ("b.i", None),
+            ("c{d.i", None),
+            (".i", None),
+            // patterns nested in braces
+            ("some.j", Some(12)),
+            ("abe.j", Some(12)),
+            ("abf.j", Some(12)),
+            ("abg.j", None),
+            ("ace.j", Some(12)),
+            ("acf.j", Some(12)),
+            ("acg.j", None),
+            ("abce.j", Some(12)),
+            ("abcf.j", Some(12)),
+            ("abcg.j", None),
+            ("ae.j", None),
+            (".j", None),
+            // alphabetical brace range: letters should not be considered for ranges
+            ("{aardvark..antelope}", Some(13)),
+            ("a", None),
+            ("aardvark", None),
+            ("agreement", None),
+            ("antelope", None),
+            ("antimatter", None),
+        ],
+    );
+}
