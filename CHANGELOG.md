@@ -16,10 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Other
 
-- *(deps)* update rust crate globset to v0.4.22 ([#104](https://github.com/oxc-project/editorconfig-parser/pull/104))
+- _(deps)_ update rust crate globset to v0.4.22 ([#104](https://github.com/oxc-project/editorconfig-parser/pull/104))
 - reduce Rust dev debug info ([#92](https://github.com/oxc-project/editorconfig-parser/pull/92))
-- *(deps)* update rust crate globset to v0.4.20 ([#90](https://github.com/oxc-project/editorconfig-parser/pull/90))
-- *(deps)* update rust crate globset to v0.4.19 ([#85](https://github.com/oxc-project/editorconfig-parser/pull/85))
+- _(deps)_ update rust crate globset to v0.4.20 ([#90](https://github.com/oxc-project/editorconfig-parser/pull/90))
+- _(deps)_ update rust crate globset to v0.4.19 ([#85](https://github.com/oxc-project/editorconfig-parser/pull/85))
 - update sponsor section
 - normalize README sponsor section
 - add autofix workflow ([#72](https://github.com/oxc-project/editorconfig-parser/pull/72))
