@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.5](https://github.com/oxc-project/editorconfig-parser/compare/v0.0.4...v0.0.5) - 2026-11-25
+
+### Fixed
+
+- match path separators in globs as the spec says ([#109](https://github.com/oxc-project/editorconfig-parser/pull/109))
+- match brace globs as the spec says ([#108](https://github.com/oxc-project/editorconfig-parser/pull/108))
+
+### Other
+
+- _(deps)_ update rust crate globset to v0.4.22 ([#104](https://github.com/oxc-project/editorconfig-parser/pull/104))
+- reduce Rust dev debug info ([#92](https://github.com/oxc-project/editorconfig-parser/pull/92))
+- _(deps)_ update rust crate globset to v0.4.20 ([#90](https://github.com/oxc-project/editorconfig-parser/pull/90))
+- _(deps)_ update rust crate globset to v0.4.19 ([#85](https://github.com/oxc-project/editorconfig-parser/pull/85))
+- update sponsor section
+- normalize README sponsor section
+- add autofix workflow ([#72](https://github.com/oxc-project/editorconfig-parser/pull/72))
+
 ## [0.0.4](https://github.com/oxc-project/editorconfig-parser/compare/v0.0.3...v0.0.4) - 2026-04-05
 
 ### Added
