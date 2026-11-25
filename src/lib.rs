@@ -167,7 +167,9 @@ impl EditorConfig {
                 preamble = false;
                 if let Some(line) = line.strip_suffix(']') {
                     let name = line.to_string();
-                    let matcher = GlobBuilder::new(&escape_literal_braces(&name))
+                    let matcher = GlobBuilder::new(&section_glob(&name))
+                        .literal_separator(true)
+                        .backslash_escape(true)
                         .empty_alternates(true)
                         .build()
                         .ok()
@@ -371,22 +373,29 @@ impl EditorConfigProperty<MaxLineLength> {
     }
 }
 
-/// Make braces that are not an alternation match literally,
-/// since `globset` treats every `{...}` as one.
+/// Rewrite a section name into a `globset` pattern that matches as the spec says.
 ///
-/// Per the spec, only a brace pair with a comma is an alternation,
-/// e.g. `{s1}`, `{}` and an unmatched `{` or `}` match literally.
-/// They are rewritten to `[{]` and `[}]`,
-/// since `globset` does not treat `\` as an escape on Windows by default.
+/// - A glob without `/` matches at any level, so it gets a `**/` prefix.
+///   A leading `/` is dropped, since a glob with `/` is relative anyway.
+/// - `**` inside a path component, e.g. `lib/**.js`, becomes `{*,*/**/*}`,
+///   since `globset` treats it as `*`.
+/// - Braces without a comma, e.g. `{s1}`, `{}`, and unmatched ones are escaped,
+///   since the spec matches them literally.
 ///
 /// Known gaps:
-/// - Braces inside `[...]` are not skipped.
+/// - `[...]` is not tracked, so `/`, `**` and braces inside it are handled as if outside.
 /// - `{num1..num2}` ranges are not supported, so they also match literally.
-fn escape_literal_braces(glob: &str) -> String {
+fn section_glob(name: &str) -> String {
+    let mut glob = String::with_capacity(name.len() + "**/".len());
+    if !name.contains('/') {
+        glob.push_str("**/");
+    }
+    let name = name.strip_prefix('/').unwrap_or(name);
+
     let mut literals = vec![];
     // Index of each open `{`, and whether it has a comma.
     let mut stack: Vec<(usize, bool)> = vec![];
-    let mut chars = glob.char_indices();
+    let mut chars = name.char_indices();
     while let Some((i, c)) = chars.next() {
         match c {
             '\\' => {
@@ -408,14 +417,22 @@ fn escape_literal_braces(glob: &str) -> String {
     }
     literals.extend(stack.into_iter().map(|(open, _)| open));
 
-    let mut escaped = String::with_capacity(glob.len() + literals.len() * 2);
-    for (i, c) in glob.char_indices() {
-        // O(n * m) scan, fine for a section header with a few braces.
-        if literals.contains(&i) {
-            escaped.extend(['[', c, ']']);
-        } else {
-            escaped.push(c);
+    let mut chars = name.char_indices().peekable();
+    while let Some((i, c)) = chars.next() {
+        match c {
+            '\\' => {
+                glob.push(c);
+                glob.extend(chars.next().map(|(_, c)| c));
+            }
+            // O(n * m) scan, fine for a section header with a few braces.
+            '{' | '}' if literals.contains(&i) => glob.extend(['\\', c]),
+            '*' if chars.next_if(|&(_, c)| c == '*').is_some() => {
+                let component = (glob.is_empty() || glob.ends_with('/'))
+                    && chars.peek().is_none_or(|&(_, c)| c == '/');
+                glob.push_str(if component { "**" } else { "{*,*/**/*}" });
+            }
+            _ => glob.push(c),
         }
     }
-    escaped
+    glob
 }
