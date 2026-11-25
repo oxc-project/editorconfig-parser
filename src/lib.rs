@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use globset::{Glob, GlobMatcher};
+use globset::{GlobBuilder, GlobMatcher};
 
 #[derive(Debug, Default, Clone)]
 pub struct EditorConfig {
@@ -167,7 +167,11 @@ impl EditorConfig {
                 preamble = false;
                 if let Some(line) = line.strip_suffix(']') {
                     let name = line.to_string();
-                    let matcher = Glob::new(&name).ok().map(|glob| glob.compile_matcher());
+                    let matcher = GlobBuilder::new(&escape_literal_braces(&name))
+                        .empty_alternates(true)
+                        .build()
+                        .ok()
+                        .map(|glob| glob.compile_matcher());
                     sections.push(EditorConfigSection {
                         name,
                         matcher,
@@ -365,4 +369,53 @@ impl EditorConfigProperty<MaxLineLength> {
             Self::None
         }
     }
+}
+
+/// Make braces that are not an alternation match literally,
+/// since `globset` treats every `{...}` as one.
+///
+/// Per the spec, only a brace pair with a comma is an alternation,
+/// e.g. `{s1}`, `{}` and an unmatched `{` or `}` match literally.
+/// They are rewritten to `[{]` and `[}]`,
+/// since `globset` does not treat `\` as an escape on Windows by default.
+///
+/// Known gaps:
+/// - Braces inside `[...]` are not skipped.
+/// - `{num1..num2}` ranges are not supported, so they also match literally.
+fn escape_literal_braces(glob: &str) -> String {
+    let mut literals = vec![];
+    // Index of each open `{`, and whether it has a comma.
+    let mut stack: Vec<(usize, bool)> = vec![];
+    let mut chars = glob.char_indices();
+    while let Some((i, c)) = chars.next() {
+        match c {
+            '\\' => {
+                chars.next();
+            }
+            '{' => stack.push((i, false)),
+            ',' => {
+                if let Some(top) = stack.last_mut() {
+                    top.1 = true;
+                }
+            }
+            '}' => match stack.pop() {
+                Some((_, true)) => {}
+                Some((open, false)) => literals.extend([open, i]),
+                None => literals.push(i),
+            },
+            _ => {}
+        }
+    }
+    literals.extend(stack.into_iter().map(|(open, _)| open));
+
+    let mut escaped = String::with_capacity(glob.len() + literals.len() * 2);
+    for (i, c) in glob.char_indices() {
+        // O(n * m) scan, fine for a section header with a few braces.
+        if literals.contains(&i) {
+            escaped.extend(['[', c, ']']);
+        } else {
+            escaped.push(c);
+        }
+    }
+    escaped
 }
