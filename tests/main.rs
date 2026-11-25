@@ -279,13 +279,12 @@ fn assert_indent_sizes(source: &str, cases: &[(&str, Option<usize>)]) {
 }
 
 /// Ported from https://github.com/editorconfig/editorconfig-core-test/blob/master/glob/braces.in
-/// Skips unsupported cases:
-/// - `\` escapes, which `globset` does not support on Windows
-/// - Numeric ranges
+/// Skips numeric ranges, which are not supported yet,
+/// and `\.txt`, which is not a file name on Windows.
 #[test]
 fn braces() {
     assert_indent_sizes(
-        "
+        r"
         [*.{py,js,html}]
         indent_size = 1
         [{single}.b]
@@ -312,6 +311,12 @@ fn braces() {
         indent_size = 12
         [{aardvark..antelope}]
         indent_size = 13
+        [{a\,b,cd}.txt]
+        indent_size = 14
+        [{e,\},f}.txt]
+        indent_size = 15
+        [{g,\\,i}.txt]
+        indent_size = 16
     ",
         &[
             // word choice
@@ -385,6 +390,143 @@ fn braces() {
             ("agreement", None),
             ("antelope", None),
             ("antimatter", None),
+            // escaped comma
+            ("a,b.txt", Some(14)),
+            ("a.txt", None),
+            ("cd.txt", Some(14)),
+            // escaped closing brace
+            ("e.txt", Some(15)),
+            ("}.txt", Some(15)),
+            ("f.txt", Some(15)),
+            // escaped backslash
+            ("g.txt", Some(16)),
+            ("i.txt", Some(16)),
         ],
     );
+}
+
+/// Ported from https://github.com/editorconfig/editorconfig-core-test/blob/master/glob/star.in
+/// and `glob/question.in`.
+#[test]
+fn star_and_question() {
+    assert_indent_sizes(
+        "
+        [*]
+        indent_size = 1
+        [a*e.c]
+        indent_size = 2
+        [Bar/*]
+        indent_size = 3
+        [som?.c]
+        indent_size = 4
+    ",
+        &[
+            // star
+            ("ace.c", Some(2)),
+            ("ae.c", Some(2)),
+            ("abcde.c", Some(2)),
+            ("a/e.c", Some(1)),
+            ("Bar/foo.txt", Some(3)),
+            ("Bar/.editorconfig", Some(3)),
+            (".editorconfig", Some(1)),
+            ("bat/Bar/foo.txt", Some(1)),
+            ("bat/Bar/.editorconfig", Some(1)),
+            // question
+            ("some.c", Some(4)),
+            ("som.c", Some(1)),
+            ("something.c", Some(1)),
+            ("som/.c", Some(1)),
+        ],
+    );
+}
+
+/// Ported from https://github.com/editorconfig/editorconfig-core-test/blob/master/glob/star_star.in
+/// and the example on https://editorconfig.org
+#[test]
+fn star_star() {
+    assert_indent_sizes(
+        "
+        [a**z.c]
+        indent_size = 1
+        [b/**z.c]
+        indent_size = 2
+        [c**/z.c]
+        indent_size = 3
+        [d/**/z.c]
+        indent_size = 4
+        [lib/**.js]
+        indent_size = 5
+    ",
+        &[
+            ("a/z.c", Some(1)),
+            ("amnz.c", Some(1)),
+            ("am/nz.c", Some(1)),
+            ("a/mnz.c", Some(1)),
+            ("amn/z.c", Some(1)),
+            ("a/mn/z.c", Some(1)),
+            ("b/z.c", Some(2)),
+            ("b/mnz.c", Some(2)),
+            ("b/mn/z.c", Some(2)),
+            ("bmnz.c", None),
+            ("bm/nz.c", None),
+            ("bmn/z.c", None),
+            ("c/z.c", Some(3)),
+            ("cmn/z.c", Some(3)),
+            ("c/mn/z.c", Some(3)),
+            ("cmnz.c", None),
+            ("cm/nz.c", None),
+            ("c/mnz.c", None),
+            ("d/z.c", Some(4)),
+            ("d/mn/z.c", Some(4)),
+            ("dmnz.c", None),
+            ("dm/nz.c", None),
+            ("d/mnz.c", None),
+            ("dmn/z.c", None),
+            ("lib/a.js", Some(5)),
+            ("lib/a/b.js", Some(5)),
+            ("src/lib/a.js", None),
+        ],
+    );
+}
+
+/// Ported from https://github.com/editorconfig/editorconfig-core-test/blob/master/filetree/path_separator.in
+/// Skips `windows\separator2`, which is not a file name on Windows.
+#[test]
+fn path_separator() {
+    assert_indent_sizes(
+        r"
+        [path/separator]
+        indent_size = 1
+        [/top/of/path]
+        indent_size = 2
+        [windows\separator]
+        indent_size = 3
+        [windows\\separator2]
+        indent_size = 4
+    ",
+        &[
+            ("path/separator", Some(1)),
+            ("nested/path/separator", None),
+            ("top/of/path", Some(2)),
+            ("not/top/of/path", None),
+            ("windows/separator", None),
+            ("windows/separator2", None),
+        ],
+    );
+}
+
+/// Ported from https://github.com/editorconfig/editorconfig-core-test/blob/master/parser/leading_slash.in
+#[test]
+fn leading_slash() {
+    let editor_config = EditorConfig::parse(
+        "
+        [/test1/file.{java,js,rb}]
+        [test1/file.{java,js,rb}]
+        [*.{java,js,rb}]
+    ",
+    );
+    for section in editor_config.sections() {
+        let is_match = section.matcher.as_ref().is_some_and(|m| m.is_match("test1/file.java"));
+        assert!(is_match, "[{}]", section.name);
+    }
 }
