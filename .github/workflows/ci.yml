@@ -24,14 +24,16 @@ env:
 
 jobs:
   test:
-    name: Test
+    name: Test (${{ matrix.name || matrix.os }})
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
           - os: windows-latest
-          - os: macos-14
+          # Keep the old check name until the ruleset requires `Test (macos-latest)`
+          - os: macos-latest
+            name: macos-14
     runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
